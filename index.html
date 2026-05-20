@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AeroTalks</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="janela-principal">
+        
+        <div class="cabecalho-janela">
+            <h1><div class="icone-status"></div> AeroTalks</h1>
+            <span id="display-usuario" style="font-size: 12px; color: #555;"></span>
+        </div>
+
+        <div class="conteudo-janela">
+            
+            <div id="tela-lobby">
+                <div class="container-salas">
+                    
+                    <div class="painel-salas">
+                        <h2>Criar Nova Sala</h2>
+                        <div class="formulario-criar-sala">
+                            <input type="text" id="input-nova-sala" placeholder="Ex: Programação Web..." maxlength="30">
+                            <button class="botao-padrao" onclick="criarSala()">Criar</button>
+                        </div>
+                    </div>
+
+                    <div class="painel-salas" style="flex: 1;">
+                        <h2>Salas Ativas</h2>
+                        <div class="grade-salas" id="lista-salas">
+                            </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div id="tela-chat">
+                
+                <div class="barra-lateral">
+                    <h2>Sala Atual</h2>
+                    <div id="nome-sala-atual" style="font-weight: bold; color: #005580; margin-bottom: 20px;">-</div>
+                    <div class="botao-voltar" onclick="voltarProLobby()">Sair da Sala</div>
+                </div>
+
+                <div class="area-chat">
+                    
+                    <div class="lista-mensagens" id="container-mensagens">
+                        </div>
+
+                    <div class="area-digitacao">
+                        <textarea id="input-mensagem" placeholder="Digite sua mensagem (Enter para enviar)..." onkeypress="verificarEnter(event)"></textarea>
+                        <button class="botao-padrao" onclick="enviarMensagem()">Enviar</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. variáveis de configuração globais ---
+        
+        // url_api: é o caminho do seu backend em java. todas as requisições (fetch) vão bater aqui.
+        const URL_API = "http://localhost:8080/api"; 
+        
+        // tempo de vida da mensagem: 60 minutos * 60 segundos * 1000 milissegundos.
+        const TEMPO_VIDA_MS = 60 * 60 * 1000; 
+        
+        // cria um nome fake para a sessão atual, já que não temos sistema de login.
+        const meuUsuario = "Anônimo_" + Math.floor(Math.random() * 1000);
+        
+        // guarda em qual sala o usuário está no momento. começa vazio.
+        let salaAtual = "";
+        
+        // guarda a rotina (setinterval) que fica buscando mensagens no java. precisamos dessa variável para conseguir "matar" a rotina quando sairmos da sala.
+        let loopMensagens = null;
+        
+        // escreve o nome gerado lá no topo do html
+        document.getElementById('display-usuario').innerText = `Conectado como: ${meuUsuario}`;
+
+
+        // --- 2. comunicação com o backend (java) para as salas ---
+        
+        // carregarSalas: pergunta pro java quais salas existem e desenha os botões na tela.
+        async function carregarSalas() {
+            // garantimos que a 'sala principal' sempre exista, mesmo se o java falhar.
+            let salasParaMostrar = ["Sala Principal"];
+
+            try {
+                // o fetch faz um get na rota /api/salas do java.
+                const resposta = await fetch(`${URL_API}/salas`);
+                if (resposta.ok) {
+                    // se o java responder com sucesso, transformamos a resposta em um array.
+                    const salasDoJava = await resposta.json();
+                    
+                    // o 'set' serve para juntar a sala principal com as salas do java, sem deixar nomes duplicados.
+                    const salasCombinadas = new Set([...salasParaMostrar, ...salasDoJava]);
+                    salasParaMostrar = Array.from(salasCombinadas);
+                }
+            } catch (erro) {
+                // se der erro (ex: eclipse/spring boot desligado), avisa no console e segue o jogo.
+                console.warn("backend java indisponível. usando sala padrão.");
+            }
+
+            // pega a div onde as salas vão ficar e limpa ela (pra não duplicar os botões se atualizarmos).
+            const lista = document.getElementById('lista-salas');
+            lista.innerHTML = ''; 
+            
+            // para cada sala no array, ele cria um elemento <div> novo, bota o nome, diz que ao clicar vai pra função 'entrarnasala' e insere no html.
+            salasParaMostrar.forEach(sala => {
+                const div = document.createElement('div');
+                div.className = 'cartao-sala';
+                div.innerText = sala;
+                div.onclick = () => entrarNaSala(sala); 
+                lista.appendChild(div);
+            });
+        }
+
+        // criarSala: pega o que o usuário digitou e manda pro java salvar.
+        async function criarSala() {
+            const input = document.getElementById('input-nova-sala');
+            const nome = input.value.trim();
+            if(nome === "") return; // não deixa criar sala sem nome
+
+            try {
+                // faz um post pro java avisando: "guarda essa sala nova aí"
+                await fetch(`${URL_API}/salas`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nome: nome })
+                });
+            } catch (erro) {
+                console.warn("criando sala apenas localmente (java não respondeu).");
+            }
+
+            // mesmo que o java falhe, ele joga o usuário pra dentro da sala recém criada
+            entrarNaSala(nome);
+            input.value = ""; 
+        }
+
+
+        // --- 3. controle de telas (sumir e aparecer divs) ---
+        
+        // entrarNaSala: transição visual do lobby para o chat.
+        function entrarNaSala(nome) {
+            salaAtual = nome; // guarda o nome na memória
+            
+            // manipulação de css via javascript: esconde o lobby e mostra o chat
+            document.getElementById('tela-lobby').style.display = 'none';
+            document.getElementById('tela-chat').style.display = 'flex';
+            
+            // escreve o nome da sala na barra lateral
+            document.getElementById('nome-sala-atual').innerText = nome;
+            
+            // limpa as mensagens de conversas anteriores e bota o aviso inicial
+            document.getElementById('container-mensagens').innerHTML = `
+                <div style="text-align: center; margin-bottom: 15px; font-size: 11px; color: #888;">
+                    Você entrou na sala "${nome}".<br>
+                    <em>Aviso: As mensagens evaporam após 60 minutos.</em>
+                </div>
+            `;
+            
+            // dá o primeiro disparo pra puxar as mensagens e depois liga o modo automático a cada 2 segundos.
+            buscarMensagens(); 
+            loopMensagens = setInterval(buscarMensagens, 2000); 
+        }
+
+        // voltarProLobby: faz o caminho inverso, saindo do chat.
+        function voltarProLobby() {
+            salaAtual = ""; 
+            
+            // esconde o chat e mostra o lobby
+            document.getElementById('tela-chat').style.display = 'none';
+            document.getElementById('tela-lobby').style.display = 'flex';
+            
+            // importantíssimo: manda parar de buscar mensagens no java, senão o navegador trava de tanta requisição inútil em segundo plano.
+            if (loopMensagens) clearInterval(loopMensagens); 
+            
+            // recarrega a lista pra ver se alguém criou salas novas enquanto a gente tava no chat.
+            carregarSalas();
+        }
+
+
+        // --- 4. comunicação com o backend para as mensagens ---
+        
+        // intercepta a tecla enter do teclado para não precisar clicar no botão com o mouse.
+        function verificarEnter(e) { 
+            if (e.key === 'Enter' && !e.shiftKey) { 
+                e.preventDefault(); 
+                enviarMensagem(); 
+            } 
+        }
+
+        // enviarMensagem: monta o pacote json e manda pro java.
+        async function enviarMensagem() {
+            const input = document.getElementById('input-mensagem');
+            const texto = input.value.trim();
+            if(texto === "") return;
+
+            // calcula exatamente em qual milissegundo a mensagem deve morrer (hora de agora + 60 min)
+            const horaExpiracao = Date.now() + TEMPO_VIDA_MS;
+
+            // desenha a mensagem na tela do cara na mesma hora, assim ele não acha que a internet caiu enquanto o java processa.
+            renderizarMensagem(meuUsuario, texto, horaExpiracao, true);
+            input.value = "";
+
+            try {
+                // manda o pacote completo (sala, quem mandou, o que falou, que horas expira) pro java armazenar.
+                await fetch(`${URL_API}/mensagens`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sala: salaAtual,
+                        usuario: meuUsuario,
+                        texto: texto,
+                        expiraEm: horaExpiracao
+                    })
+                });
+            } catch (erro) {
+                console.error("falha ao enviar para o servidor java.", erro);
+            }
+        }
+
+        // buscarMensagens: a função que o setinterval roda a cada 2 segundos.
+        async function buscarMensagens() {
+            if (!salaAtual) return;
+
+            try {
+                // pede pro java só as mensagens da sala atual. (o java precisa filtrar isso lá no backend dele!)
+                const resposta = await fetch(`${URL_API}/mensagens?sala=${encodeURIComponent(salaAtual)}`);
+                if (!resposta.ok) return;
+
+                const mensagens = await resposta.json();
+                
+                // limpa a tela de chat inteira pra não duplicar balões, mas guarda o aviso do topo pra colar ele de volta.
+                const container = document.getElementById('container-mensagens');
+                const avisoTopo = container.firstElementChild.outerHTML; 
+                container.innerHTML = avisoTopo; 
+
+                // varre a lista que o java devolveu e redesenha balão por balão.
+                mensagens.forEach(msg => {
+                    // descobre se o balão é azul (meu) ou cinza (dos outros) comparando os nomes.
+                    const ehMinha = msg.usuario === meuUsuario;
+                    renderizarMensagem(msg.usuario, msg.texto, msg.expiraEm, ehMinha);
+                });
+
+            } catch (erro) {
+                // ignoramos o erro visualmente pro usuário não ficar vendo a tela piscar erro a cada 2 segundos se a net cair.
+            }
+        }
+
+        // renderizarMensagem: a 'fábrica' de html. pega dados brutos e transforma na div do balãozinho na tela.
+        function renderizarMensagem(usuario, texto, expiraEm, ehMinha) {
+            const container = document.getElementById('container-mensagens');
+            
+            const classeTipo = ehMinha ? 'enviada' : 'recebida';
+            const nomeExibicao = ehMinha ? `${usuario} (Você)` : usuario;
+
+            const divMsg = document.createElement('div');
+            divMsg.className = `mensagem ${classeTipo}`;
+            
+            // injeta a hora da morte da mensagem direto no código fonte da div para o timer conseguir ler depois
+            divMsg.setAttribute('data-expira', expiraEm); 
+
+            divMsg.innerHTML = `
+                <div class="cabecalho-mensagem">
+                    <span>${nomeExibicao}</span>
+                    <span class="cronometro">Calculando...</span>
+                </div>
+                <div class="balao-mensagem">${texto}</div>
+            `;
+
+            container.appendChild(divMsg);
+            
+            // força o chat a descer (fazer scroll automático) pro final sempre que entra balão novo
+            container.scrollTop = container.scrollHeight; 
+            
+            // já manda atualizar o reloginho pra não ficar escrito "calculando..." nem por 1 segundo.
+            atualizarTimers();
+        }
+
+
+        // --- 5. o motor de autodestruição visual ---
+        
+        // atualizarTimers: a rotina que varre a tela olhando validade de mensagem
+        function atualizarTimers() {
+            // pega todas as divs de mensagem que existem na tela neste exato momento
+            const mensagens = document.querySelectorAll('.mensagem');
+            const agora = Date.now();
+
+            mensagens.forEach(msg => {
+                // lê o atributo escondido no html pra saber a hora da morte
+                const expiraEm = parseInt(msg.getAttribute('data-expira'));
+                // matemática básica: hora da morte - hora de agora
+                const tempoRestante = expiraEm - agora;
+
+                // se o saldo for zero ou negativo, a hora chegou.
+                if (tempoRestante <= 0) {
+                    msg.remove(); // deleta o html da tela sem dó.
+                } else {
+                    // se ainda tiver tempo, transforma os milissegundos feios em minutos e segundos legíveis.
+                    const minutos = Math.floor(tempoRestante / 60000);
+                    const segundos = Math.floor((tempoRestante % 60000) / 1000);
+                    
+                    const spanTimer = msg.querySelector('.cronometro');
+                    if (minutos > 0) {
+                        spanTimer.innerText = `Exclui em ${minutos}m`;
+                    } else {
+                        // no último minuto ele mostra os segundos e pinta de vermelho pra dar tensão
+                        spanTimer.innerText = `Exclui em ${segundos}s`;
+                        spanTimer.style.color = '#ff0000'; 
+                    }
+                }
+            });
+        }
+
+        // o coração do projeto: fica rodando a checagem de exclusão a cada 1000 milissegundos (1 seg) pra sempre.
+        setInterval(atualizarTimers, 1000);
+        
+        // primeira ação que o navegador executa ao abrir a página: carregar as salas.
+        carregarSalas();
+
+    </script>
+</body>
+</html>

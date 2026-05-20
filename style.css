@@ -1,0 +1,309 @@
+/* ================= configurações gerais ================= */
+
+/* reset global: tira margens indesejadas de todos os elementos e define a fonte do site */
+* { 
+    margin: 0; 
+    padding: 0; 
+    box-sizing: border-box; 
+    font-family: 'Tahoma', 'Verdana', sans-serif; 
+}
+
+/* o fundo do site inteiro. usa flexbox para centralizar a janela do chat bem no meio da tela */
+body {
+    background: linear-gradient(135deg, #d4f0ff 0%, #87ceeb 50%, #a8e063 100%);
+    height: 100vh; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    color: #333;
+}
+
+/* ================= estrutura da janela ================= */
+
+/* o "esqueleto" do aplicativo. a caixa de vidro de 800x600px que guarda todo o site */
+.janela-principal {
+    width: 800px; 
+    height: 600px;
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 1);
+    display: flex; 
+    flex-direction: column; 
+    overflow: hidden; /* corta qualquer coisa que tentar vazar dos 800x600 */
+    backdrop-filter: blur(5px); /* dá o efeito de vidro fosco */
+}
+
+/* a barra superior azul onde fica o nome do aplicativo e o nome do usuário */
+.cabecalho-janela {
+    background: linear-gradient(to bottom, #f2f9fe 0%, #d6f0fd 49%, #bee6fd 50%, #a4d9f5 100%);
+    padding: 10px 15px; 
+    border-bottom: 1px solid #7bc6f2;
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+}
+
+/* o título "aerotalks" dentro do cabeçalho */
+.cabecalho-janela h1 {
+    font-size: 16px; 
+    color: #005580; 
+    text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.8);
+    display: flex; 
+    align-items: center; 
+    gap: 8px;
+}
+
+/* a bolinha verde ao lado do título (referência ao status "online" do msn) */
+.icone-status {
+    width: 12px; 
+    height: 12px; 
+    border-radius: 50%;
+    background: linear-gradient(to bottom, #99ea48 0%, #5cb811 100%);
+    border: 1px solid #3a7a08; 
+    box-shadow: inset 0 1px 2px rgba(255,255,255,0.8);
+}
+
+/* o espaço interno da janela onde as telas vão ficar trocando (lobby ou chat) */
+.conteudo-janela {
+    display: flex;
+    flex: 1; /* ocupa todo o espaço restante abaixo do cabeçalho */
+    overflow: hidden; 
+}
+
+/* ================= comportamento das telas ================= */
+
+/* regras em comum para as duas telas principais do site */
+#tela-lobby, 
+#tela-chat { 
+    display: flex; 
+    flex: 1; 
+    width: 100%;
+    overflow: hidden; /* blinda a tela para não quebrar o layout se o conteúdo crescer muito */
+}
+
+/* a tela de chat inicia invisível. o javascript muda isso para 'flex' quando entramos numa sala */
+#tela-chat { 
+    display: none; 
+} 
+
+/* ================= lobby de salas ================= */
+
+/* a área cinza/transparente que guarda os painéis de criar e listar salas */
+.container-salas { 
+    flex: 1; 
+    padding: 30px; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 20px; 
+    background: rgba(255,255,255,0.4); 
+    overflow-y: auto; /* adiciona rolagem se tiverem muitas salas criadas */
+}
+
+/* as caixas brancas redondinhas dentro do lobby ("criar nova sala" e "salas ativas") */
+.painel-salas {
+    background: #fff; 
+    border: 1px solid #b3d9ff; 
+    border-radius: 6px; 
+    padding: 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+/* o título dentro de cada painel do lobby */
+.painel-salas h2 { 
+    font-size: 14px; 
+    color: #005580; 
+    margin-bottom: 15px; 
+    border-bottom: 1px solid #eee; 
+    padding-bottom: 5px; 
+}
+
+/* a malha invisível que organiza os botões das salas em colunas dinâmicas */
+.grade-salas { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); 
+    gap: 10px; 
+}
+
+/* o "botão" grande de cada sala individual (ex: botão "vampiros") */
+.cartao-sala {
+    padding: 15px; 
+    background: linear-gradient(to bottom, #ffffff 0%, #eef3f8 100%);
+    border: 1px solid #cce0ff; 
+    border-radius: 6px; 
+    cursor: pointer; 
+    text-align: center;
+    transition: all 0.2s; 
+    font-weight: bold; 
+    color: #333;
+}
+
+/* efeito de passar o mouse em cima da sala (fica azulado e sobe um pouquinho) */
+.cartao-sala:hover { 
+    background: linear-gradient(to bottom, #eef8ff 0%, #ccebff 100%); 
+    border-color: #99ccff; 
+    transform: translateY(-2px); 
+}
+
+/* onde o usuário digita o nome de uma sala nova e aperta "criar" */
+.formulario-criar-sala { 
+    display: flex; 
+    gap: 10px; 
+}
+
+/* a caixa de texto de criar sala */
+.formulario-criar-sala input { 
+    flex: 1; 
+    padding: 8px; 
+    border: 1px solid #99b3cc; 
+    border-radius: 4px; 
+    font-size: 13px; 
+}
+
+/* ================= menu lateral do chat ================= */
+
+/* a barra do lado esquerdo do chat que mostra o nome da sala atual e o botão de sair */
+.barra-lateral { 
+    width: 200px; 
+    background: rgba(240, 248, 255, 0.7); 
+    border-right: 1px solid #b3d9ff; 
+    padding: 15px; 
+    display: flex; 
+    flex-direction: column;
+}
+
+/* título dentro da barra lateral ("sala atual") */
+.barra-lateral h2 { 
+    font-size: 13px; 
+    margin-bottom: 10px; 
+}
+
+/* botão vermelho de "sair da sala" posicionado no final da barra lateral */
+.botao-voltar { 
+    margin-top: auto; 
+    padding: 8px; 
+    text-align: center; 
+    font-size: 11px; 
+    cursor: pointer; 
+    color: #cc0000; 
+    text-decoration: underline; 
+}
+
+/* ================= área de mensagens ================= */
+
+/* o bloco direito inteiro (fundo de ondas + caixa de digitar texto) */
+.area-chat { 
+    flex: 1; 
+    display: flex; 
+    flex-direction: column; 
+    background: #ffffff; 
+    overflow: hidden; 
+}
+
+/* o painel onde as mensagens aparecem. tem fundo com ondas e rola para baixo */
+.lista-mensagens { 
+    flex: 1; 
+    padding: 20px; 
+    overflow-y: auto; /* se tiver muita mensagem, cria scroll aqui e não na página toda */
+    background: url('data:image/svg+xml;utf8,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><path d="M50 0 C20 40, 80 60, 50 100" stroke="%23f0f8ff" stroke-width="2" fill="none"/></svg>') repeat; 
+}
+
+/* o contêiner de uma mensagem individual. tem animação pra surgir na tela de baixo pra cima */
+.mensagem { 
+    margin-bottom: 15px; 
+    max-width: 80%; /* a mensagem não atravessa a tela inteira, fica contida */
+    animation: fadeIn 0.3s ease; 
+}
+
+/* animação que faz a mensagem aparecer suavemente */
+@keyframes fadeIn { 
+    from { opacity: 0; transform: translateY(10px); } 
+    to { opacity: 1; transform: translateY(0); } 
+}
+
+/* onde fica o nome do usuário e o timer de "exclui em x minutos" */
+.cabecalho-mensagem { 
+    font-size: 11px; 
+    color: #888; 
+    margin-bottom: 3px; 
+    display: flex; 
+    justify-content: space-between; 
+    gap: 15px;
+}
+
+/* o quadradinho (balãozinho) de texto com a mensagem do usuário */
+.balao-mensagem { 
+    padding: 10px 12px; 
+    border-radius: 6px; 
+    font-size: 13px; 
+    line-height: 1.4; 
+    box-shadow: 1px 1px 3px rgba(0,0,0,0.1); 
+    word-wrap: break-word; /* quebra palavras muito longas para não estourar o layout */
+}
+
+/* cor e alinhamento de mensagens recebidas de outras pessoas (cinza, lado esquerdo) */
+.mensagem.recebida { 
+    align-self: flex-start; 
+}
+.mensagem.recebida .balao-mensagem { 
+    background: linear-gradient(to bottom, #fcfcfc 0%, #e6e6e6 100%); 
+    border: 1px solid #ccc; 
+}
+
+/* cor e alinhamento das minhas mensagens (azul, lado direito) */
+.mensagem.enviada { 
+    margin-left: auto; 
+}
+.mensagem.enviada .balao-mensagem { 
+    background: linear-gradient(to bottom, #e1f3ff 0%, #c1e4ff 100%); 
+    border: 1px solid #99ccff; 
+}
+
+/* estilo do timer que fica no canto superior de cada mensagem */
+.cronometro { 
+    color: #cc0000; 
+    font-weight: bold; 
+}
+
+/* ================= área de digitação de texto ================= */
+
+/* o painel inferior azulzinho onde fica o textarea e o botão enviar */
+.area-digitacao { 
+    padding: 15px; 
+    background: linear-gradient(to bottom, #f5fafd 0%, #e1eff8 100%); 
+    border-top: 1px solid #b3d9ff; 
+    display: flex; 
+    gap: 10px; 
+    flex-shrink: 0; /* impede que a caixa suma se as mensagens em cima tomarem muito espaço */
+}
+
+/* a caixa onde você efetivamente digita a mensagem */
+.area-digitacao textarea { 
+    flex: 1; 
+    height: 60px; 
+    border: 1px solid #99b3cc; 
+    border-radius: 4px; 
+    padding: 8px; 
+    font-size: 13px; 
+    resize: none; /* bloqueia o usuário de esticar a caixa manualmente pelo canto */
+}
+
+/* ================= botões padrão do sistema ================= */
+
+/* estilo do botão padrão (usado no botão "criar" sala e "enviar" mensagem) */
+.botao-padrao {
+    padding: 0 15px; 
+    background: linear-gradient(to bottom, #ffffff 0%, #e5e5e5 49%, #cccccc 50%, #ffffff 100%);
+    border: 1px solid #999; 
+    border-radius: 6px; 
+    font-weight: bold; 
+    color: #333; 
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* efeito de clique do botão (quando você aperta, ele parece afundar na tela) */
+.botao-padrao:active { 
+    background: linear-gradient(to bottom, #cccccc 0%, #b3b3b3 49%, #999999 50%, #cccccc 100%); 
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); 
+}
