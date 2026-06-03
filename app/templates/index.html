@@ -619,6 +619,97 @@ body {
   line-height: 1.5;
 }
 
+
+/* ══════════════════════════════════════════
+   LOGIN / CADASTRO WINDOW
+══════════════════════════════════════════ */
+#win-auth {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 340px;
+  z-index: 50;
+}
+
+.auth-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 14px;
+}
+.auth-tab {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  padding: 7px 14px;
+  cursor: pointer;
+  background: var(--btn-face);
+  border: 2px solid;
+  border-color: var(--btn-hi) var(--btn-sh) var(--btn-sh) var(--btn-hi);
+  color: var(--text-dark);
+  flex: 1;
+  text-align: center;
+}
+.auth-tab.active {
+  background: var(--titlebar);
+  color: var(--titletext);
+  border-color: #ffd0e8 var(--bezel-dark) var(--bezel-dark) #ffd0e8;
+}
+
+.auth-form { display: flex; flex-direction: column; gap: 10px; }
+.auth-form label {
+  font-size: 7px;
+  color: var(--text-dark);
+  margin-bottom: 2px;
+  display: block;
+}
+.auth-form input {
+  font-family: 'VT323', monospace;
+  font-size: 20px;
+  background: white;
+  border: 2px solid;
+  border-color: var(--btn-sh) var(--btn-hi) var(--btn-hi) var(--btn-sh);
+  color: var(--text-dark);
+  padding: 5px 8px;
+  outline: none;
+  width: 100%;
+}
+.auth-form input:focus {
+  border-color: var(--titlebar) var(--btn-sh) var(--btn-sh) var(--titlebar);
+}
+.auth-form input::placeholder { color: var(--text-dim); }
+
+.auth-aviso {
+  font-family: 'VT323', monospace;
+  font-size: 15px;
+  color: #7a3060;
+  background: #fff8e8;
+  border: 2px solid;
+  border-color: var(--btn-sh) var(--btn-hi) var(--btn-hi) var(--btn-sh);
+  padding: 7px 10px;
+  line-height: 1.5;
+}
+.auth-aviso strong { color: #c030a0; }
+
+.auth-footer {
+  font-family: 'VT323', monospace;
+  font-size: 15px;
+  color: var(--text-dim);
+  text-align: center;
+  margin-top: 4px;
+}
+.auth-footer span {
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: underline;
+}
+.auth-footer span:hover { color: var(--titlebar); }
+
+/* overlay escurece o desktop por trás */
+#auth-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 0, 20, 0.55);
+  z-index: 40;
+}
 </style>
 </head>
 <body>
@@ -629,8 +720,6 @@ body {
     <!-- MENUBAR -->
     <div class="menubar">
       <span class="menubar-logo">✦ AeroTalks</span>
-      <span class="menubar-item">Arquivo</span>
-      <span class="menubar-item">Salas</span>
       <span class="menubar-item">Ajuda</span>
       <span class="menubar-clock" id="relogio">--:--</span>
     </div>
@@ -747,6 +836,75 @@ body {
       </div>
 
     </div><!-- /desktop-area -->
+
+    <!-- OVERLAY -->
+    <div id="auth-overlay"></div>
+
+    <!-- ══ JANELA: LOGIN / CADASTRO ══ -->
+    <div class="win" id="win-auth">
+      <div class="win-titlebar">
+        <div class="win-title-text">
+          <div class="win-title-icon">💜</div>
+          AeroTalks — Bem vinda!
+        </div>
+        <div class="win-btns">
+          <div class="w-btn x-btn">×</div>
+        </div>
+      </div>
+      <div class="win-body">
+
+        <!-- abas -->
+        <div class="auth-tabs">
+          <div class="auth-tab active" id="tab-login" onclick="trocarAba('login')">[ LOGIN ]</div>
+          <div class="auth-tab" id="tab-cadastro" onclick="trocarAba('cadastro')">[ CADASTRO ]</div>
+        </div>
+
+        <!-- formulário LOGIN -->
+        <div id="form-login" class="auth-form">
+          <div>
+            <label>usuário</label>
+            <input type="text" id="login-usuario" placeholder="seu usuário...">
+          </div>
+          <div>
+            <label>senha</label>
+            <input type="password" id="login-senha" placeholder="sua senha...">
+          </div>
+          <button class="px-btn primary" onclick="fazerLogin()">[ ENTRAR ]</button>
+          <div class="auth-footer">
+            não tem conta? <span onclick="trocarAba('cadastro')">cadastre-se</span>
+          </div>
+        </div>
+
+        <!-- formulário CADASTRO -->
+        <div id="form-cadastro" class="auth-form" style="display:none;">
+          <div class="auth-aviso">
+            ⚠ Não use seu nome real!<br>
+            <strong>Proteja sua identidade.</strong>
+          </div>
+          <div>
+            <label>email</label>
+            <input type="email" id="cad-email" placeholder="seu email...">
+          </div>
+          <div>
+            <label>usuário</label>
+            <input type="text" id="cad-usuario" placeholder="escolha um usuário...">
+          </div>
+          <div>
+            <label>senha</label>
+            <input type="password" id="cad-senha" placeholder="escolha uma senha...">
+          </div>
+          <div>
+            <label>confirmar senha</label>
+            <input type="password" id="cad-senha2" placeholder="repita a senha...">
+          </div>
+          <button class="px-btn primary" onclick="fazerCadastro()">[ CADASTRAR ]</button>
+          <div class="auth-footer">
+            já tem conta? <span onclick="trocarAba('login')">fazer login</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
 
     <!-- TASKBAR -->
     <div class="taskbar">
@@ -985,8 +1143,79 @@ body {
 
   setInterval(tickTimers, 1000);
 
+  /* ══════════════════
+     AUTH
+  ══════════════════ */
+  function trocarAba(aba) {
+    document.getElementById('form-login').style.display    = aba === 'login'    ? 'flex' : 'none';
+    document.getElementById('form-cadastro').style.display = aba === 'cadastro' ? 'flex' : 'none';
+    document.getElementById('tab-login').classList.toggle('active',    aba === 'login');
+    document.getElementById('tab-cadastro').classList.toggle('active', aba === 'cadastro');
+  }
+
+  function fecharAuth() {
+    document.getElementById('win-auth').style.display     = 'none';
+    document.getElementById('auth-overlay').style.display = 'none';
+    document.getElementById('win-lobby').style.display    = 'block';
+    carregarSalas();
+  }
+
+  // bloqueia clique no overlay
+  document.getElementById('auth-overlay').addEventListener('click', function(e) { e.stopPropagation(); });
+
+  async function fazerLogin() {
+    const usuario = document.getElementById('login-usuario').value.trim();
+    const senha   = document.getElementById('login-senha').value.trim();
+    if (!usuario || !senha) { mostrarNotif('Preencha todos os campos!'); return; }
+
+    try {
+      const r = await fetch(`${API}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ usuario, senha })
+      });
+      if (r.ok) {
+        fecharAuth();
+      } else {
+        mostrarNotif('Usuário ou senha incorretos!');
+      }
+    } catch(e) {
+      // backend ainda não implementado — entra direto
+      fecharAuth();
+    }
+  }
+
+  async function fazerCadastro() {
+    const email   = document.getElementById('cad-email').value.trim();
+    const usuario = document.getElementById('cad-usuario').value.trim();
+    const senha   = document.getElementById('cad-senha').value.trim();
+    const senha2  = document.getElementById('cad-senha2').value.trim();
+
+    if (!email || !usuario || !senha || !senha2) { mostrarNotif('Preencha todos os campos!'); return; }
+    if (senha !== senha2) { mostrarNotif('As senhas não coincidem!'); return; }
+
+    try {
+      const r = await fetch(`${API}/auth/cadastro`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, usuario, senha })
+      });
+      if (r.ok) {
+        mostrarNotif('Conta criada! Faça login.');
+        trocarAba('login');
+      } else {
+        mostrarNotif('Erro ao cadastrar. Tente outro usuário!');
+      }
+    } catch(e) {
+      // backend ainda não implementado — entra direto
+      fecharAuth();
+    }
+  }
+
   /* ── INIT ── */
-  carregarSalas();
+  // esconde lobby e chat até fazer login
+  document.getElementById('win-lobby').style.display = 'none';
+  document.getElementById('win-chat').style.display  = 'none';
 
 </script>
 </body>
