@@ -21,6 +21,7 @@ def cadastro():
     db.session.commit()
     return jsonify({"mensagem": "Conta criada com sucesso"}), 201
 
+
 @auth_bp.route("/api/auth/login", methods=["POST"])
 def login():
     data = request.get_json()
@@ -29,6 +30,7 @@ def login():
 
     user = User.query.filter_by(username=usuario).first()
     if user and user.check_password(senha):
-        return jsonify({"mensagem": "Login aprovado"}), 200
+        # Agora o Python devolve o nome de usuário para o Javascript usar!
+        return jsonify({"mensagem": "Login aprovado", "usuario": user.username}), 200
     
     return jsonify({"erro": "Usuário ou senha incorretos"}), 401

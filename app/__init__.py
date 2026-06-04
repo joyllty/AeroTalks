@@ -2,7 +2,6 @@ from flask import Flask
 from app.config import Config
 from app.extensions import db, migrate, jwt, socketio
 
-
 from app.models.user import User
 from app.models.room import Room
 from app.models.message import Message
@@ -16,7 +15,6 @@ def create_app():
     jwt.init_app(app)
     socketio.init_app(app, cors_allowed_origins="*")
 
-    # Registando as rotas
     from app.routes.test_routes import health_bp
     from app.routes.auth_routes import auth_bp
     from app.routes.chat_routes import chat_bp

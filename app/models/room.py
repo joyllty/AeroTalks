@@ -6,6 +6,7 @@ class Room(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
+    creator_username = db.Column(db.String(50), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     messages = db.relationship('Message', backref='room', lazy=True, cascade="all, delete-orphan")

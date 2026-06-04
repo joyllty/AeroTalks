@@ -936,13 +936,15 @@ body {
   /* ── SETUP ── */
   const API       = "/api";
   const TTL       = 60 * 60 * 1000;
-  const meuUser   = "Anon_" + Math.random().toString(36).slice(2,6).toUpperCase();
-  let   salaAtual = "";
-  let   loopMsgs  = null;
-  let   loopUsers = null;
-  let   salaSel   = "";
+  
+  // O usuário agora começa vazio e será preenchido pelo Login
+  let meuUser     = ""; 
+  let salaAtual   = "";
+  let loopMsgs    = null;
+  let loopUsers   = null;
+  let salaSel     = "";
 
-  document.getElementById('user-tag').innerText = meuUser;
+  document.getElementById('user-tag').innerText = "Aguardando Login...";
 
   /* ── NOTIFICAÇÃO ── */
   function mostrarNotif(txt) {
@@ -955,7 +957,7 @@ body {
   }
 
   /* ══════════════════
-     LOBBY
+     LOBBY E SALAS
   ══════════════════ */
   function abrirLobby() {
     document.getElementById('win-lobby').style.display = 'block';
@@ -964,29 +966,50 @@ body {
   }
 
   async function carregarSalas() {
-    let salas = ["Geral", "Música", "Jogos"];
+    let salasAtivas = [];
     try {
       const r = await fetch(`${API}/salas`);
       if (r.ok) {
-        const data = await r.json();
-        salas = [...new Set([...salas, ...data])];
+        salasAtivas = await r.json(); // Backend agora manda [{nome: "Geral", criador: "user"}, ...]
       }
     } catch(e) {}
 
     const lista = document.getElementById('lista-salas');
     lista.innerHTML = '';
-    document.getElementById('qtd-salas').innerText = salas.length;
+    document.getElementById('qtd-salas').innerText = salasAtivas.length;
 
-    salas.forEach(nome => {
+    salasAtivas.forEach(sala => {
       const div = document.createElement('div');
       div.className = 'sala-row';
-      div.innerText = nome;
+      div.style.justifyContent = 'space-between'; // Espalha os itens
+      
+      const spanNome = document.createElement('span');
+      spanNome.innerText = sala.nome;
+      spanNome.style.flex = '1';
+      
       div.onclick = () => {
         document.querySelectorAll('.sala-row').forEach(el => el.classList.remove('selected'));
         div.classList.add('selected');
-        salaSel = nome;
+        salaSel = sala.nome;
       };
-      div.ondblclick = () => entrarNaSala(nome);
+      div.ondblclick = () => entrarNaSala(sala.nome);
+      
+      div.appendChild(spanNome);
+
+      // Renderiza botão de excluir APENAS se eu for o criador da sala
+      if (sala.criador === meuUser) {
+        const btnDelete = document.createElement('span');
+        btnDelete.innerText = '🗑️';
+        btnDelete.title = 'Destruir Sala';
+        btnDelete.style.cursor = 'pointer';
+        btnDelete.style.fontSize = '14px';
+        btnDelete.onclick = (e) => {
+          e.stopPropagation(); // Evita selecionar a sala ao clicar no lixo
+          deletarSala(sala.nome);
+        };
+        div.appendChild(btnDelete);
+      }
+
       lista.appendChild(div);
     });
   }
@@ -1004,11 +1027,33 @@ body {
       await fetch(`${API}/salas`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nome })
+        body: JSON.stringify({ nome: nome, criador: meuUser }) // Envia o criador!
       });
     } catch(e) {}
     inp.value = '';
     entrarNaSala(nome);
+  }
+
+  async function deletarSala(nomeSala) {
+    if(!confirm(`ALERTA: Tem certeza que deseja destruir a sala "${nomeSala}" e todas as suas mensagens?`)) return;
+    
+    try {
+      const r = await fetch(`${API}/salas/${encodeURIComponent(nomeSala)}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ usuario: meuUser })
+      });
+      if (r.ok) {
+        mostrarNotif(`A sala ${nomeSala} foi destruída!`);
+        if (salaAtual === nomeSala) voltarLobby();
+        else carregarSalas();
+      } else {
+        const err = await r.json();
+        mostrarNotif(err.erro || 'Erro ao deletar sala.');
+      }
+    } catch(e) {
+      mostrarNotif('Erro de conexão com o servidor!');
+    }
   }
 
   /* ══════════════════
@@ -1160,7 +1205,6 @@ body {
     carregarSalas();
   }
 
-  // bloqueia clique no overlay
   document.getElementById('auth-overlay').addEventListener('click', function(e) { e.stopPropagation(); });
 
   async function fazerLogin() {
@@ -1175,13 +1219,15 @@ body {
         body: JSON.stringify({ usuario, senha })
       });
       if (r.ok) {
+        const data = await r.json();
+        meuUser = data.usuario; // Extrai o usuário real do banco!
+        document.getElementById('user-tag').innerText = meuUser; // Atualiza a barra de tarefas
         fecharAuth();
       } else {
         mostrarNotif('Usuário ou senha incorretos!');
       }
     } catch(e) {
-      // backend ainda não implementado — entra direto
-      mostrarNotif('Erro de conexão com o servidor!');;
+      mostrarNotif('Erro de conexão com o servidor!');
     }
   }
 
@@ -1207,13 +1253,11 @@ body {
         mostrarNotif('Erro ao cadastrar. Tente outro usuário!');
       }
     } catch(e) {
-      // backend ainda não implementado — entra direto
       mostrarNotif('Erro de conexão com o servidor!');
     }
   }
 
   /* ── INIT ── */
-  // esconde lobby e chat até fazer login
   document.getElementById('win-lobby').style.display = 'none';
   document.getElementById('win-chat').style.display  = 'none';
 
