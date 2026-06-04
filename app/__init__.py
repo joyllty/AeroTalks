@@ -2,7 +2,7 @@ from flask import Flask
 from app.config import Config
 from app.extensions import db, migrate, jwt, socketio
 
-# IMPORTANTE: Importar os modelos AQUI EM CIMA para o Flask-Migrate os conseguir detetar!
+
 from app.models.user import User
 from app.models.room import Room
 from app.models.message import Message
