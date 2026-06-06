@@ -1,6 +1,6 @@
 # AeroTalks
 
-Projeto de chat com salas temporárias usando Flask, MariaDB, Redis e Socket.IO.
+Projeto de chat com salas temporárias usando Flask, MySQL, Redis e Socket.IO.
 
 ## Como rodar
 
