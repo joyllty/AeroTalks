@@ -19,8 +19,3 @@ Projeto de chat com salas temporárias usando Flask, MariaDB, Redis e Socket.IO.
 4. Rodar o projeto:
 
   python run.py
-
-Rotas da API no momento:
-http://localhost:5000
-
-http://localhost:5000/api/health
