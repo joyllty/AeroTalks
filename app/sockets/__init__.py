@@ -1,0 +1,3 @@
+'''
+pacote de eventos websocket
+'''
