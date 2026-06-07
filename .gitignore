@@ -1,0 +1,12 @@
+# ambiente virtual e senhas
+venv/
+.env
+
+# python
+__pycache__/
+*.pyc
+
+# flask
+instance/
+
+
