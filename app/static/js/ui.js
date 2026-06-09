@@ -27,14 +27,18 @@ function mostrarChat() {
 }
 
 function voltarLobby() {
+  if (salaAtual) {
+    socket.emit("sair_sala", {
+      sala: salaAtual,
+      usuario: meuUser
+    });
+  }
+
   salaAtual = "";
 
   document.getElementById("win-chat").style.display = "none";
   document.getElementById("task-chat").style.display = "none";
   document.getElementById("task-lobby").classList.add("active");
-
-  if (loopMsgs) clearInterval(loopMsgs);
-  if (loopUsers) clearInterval(loopUsers);
 
   abrirLobby();
 }

@@ -16,8 +16,6 @@ function entrarNaSala(nome) {
   document.getElementById("container-msgs").innerHTML =
     `<div class="msg-sys">Entrou em <em>${nome}</em> — ⏱ msgs somem em 60min</div>`;
 
-  if (loopMsgs) clearInterval(loopMsgs);
-  if (loopUsers) clearInterval(loopUsers);
 
   // busca histórico uma vez ao entrar
   buscarMsgs();
@@ -76,14 +74,12 @@ async function enviar() {
 
   inp.value = "";
 
-  try {
-    await apiPost("/mensagens", {
-      sala: salaAtual,
-      usuario: meuUser,
-      texto: txt,
-      expiraEm: exp
-    });
-  } catch (e) {}
+socket.emit("enviar_mensagem", {
+    sala: salaAtual,
+    usuario: meuUser,
+    texto: txt,
+    expiraEm: exp
+  });
 }
 
 async function buscarMsgs() {

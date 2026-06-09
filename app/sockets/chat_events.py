@@ -1,14 +1,24 @@
+'''
+eventos em tempo real do chat.
+utiliza socketio para trabalhar com eventos: 
+- entrar_sala
+- sair_sala
+- enviar_mensagem
+- nova_mensagem
+- usuarios_online
+'''
 
 from flask_socketio import join_room, leave_room, emit
-from app.extensions import db
+from app.extensions import db, redis_client
 from app.models.room import Room
 from app.models.message import Message
-import time
 
 
-# Dicionário para controlar usuários online em memória
-# Para um servidor Flask só, isso funciona, futuramente, pode ir pro Redis
-usuarios_por_sala = {}
+def chave_usuarios_sala(nome_sala):
+    '''
+    Cria o nome da chave usada no Redis para guardar os usuários online de uma sala
+    '''
+    return f"sala:{nome_sala}:usuarios"
 
 
 def registrar_eventos_socket(socketio):
@@ -20,40 +30,44 @@ def registrar_eventos_socket(socketio):
     def entrar_sala(data):
         '''
         Evento chamado quando o usuário entra em uma sala
-
-        Espera receber:
-        {
-            "sala": "nome da sala",
-            "usuario": "nome do usuário"
-        }
         '''
 
+        # pega os dados
         nome_sala = data.get("sala")
         usuario = data.get("usuario")
 
+        # verifica se vieram dados
         if not nome_sala or not usuario:
             emit("erro_socket", {"erro": "Sala e usuário são obrigatórios"})
             return
 
+        # verifica se a sala existe no banco!!
         sala = Room.query.filter_by(name=nome_sala).first()
 
+        # se a sala nao existir
         if not sala:
             emit("erro_socket", {"erro": "Sala não encontrada"})
             return
 
+        # estabelecendo essa conexão WebSocket à tal sala
         # Coloca este cliente dentro da room do SocketIO
         join_room(nome_sala)
 
-        # Adiciona usuário na lista de online da sala
-        if nome_sala not in usuarios_por_sala:
-            usuarios_por_sala[nome_sala] = set()
+        # Salva o usuário online no Redis
+        chave = chave_usuarios_sala(nome_sala)
+        redis_client.sadd(chave, usuario)
 
-        usuarios_por_sala[nome_sala].add(usuario)
+        # Faz a lista de chaves expirar automaticamente depois de 1 hora
+        # não expulsa ninguem da sala, mas remove a lista de usuários online
+        # pra caso alguem saia sem desconectar/ funciona como limpeza automatica
+        redis_client.expire(chave, 3600)
 
-        # Avisa todos da sala que a lista de usuários mudou
+        usuarios = list(redis_client.smembers(chave))
+
+        # Envia a lista de usuários para todos na sala
         emit("usuarios_online", {
             "sala": nome_sala,
-            "usuarios": list(usuarios_por_sala[nome_sala])
+            "usuarios": usuarios
         }, to=nome_sala)
 
         # Avisa todos da sala que alguém entrou
@@ -68,58 +82,69 @@ def registrar_eventos_socket(socketio):
         '''
         Evento chamado quando o usuário sai de uma sala
         '''
-
+        # pega os dados
         nome_sala = data.get("sala")
         usuario = data.get("usuario")
 
         if not nome_sala or not usuario:
             return
 
+        # tira a conexão do socket daquela sala
         leave_room(nome_sala)
 
-        if nome_sala in usuarios_por_sala:
-            usuarios_por_sala[nome_sala].discard(usuario)
+        chave = chave_usuarios_sala(nome_sala)
 
-            if len(usuarios_por_sala[nome_sala]) == 0:
-                del usuarios_por_sala[nome_sala]
+        # Remove o usuário da lista de online no Redis
+        redis_client.srem(chave, usuario)
 
+        usuarios = list(redis_client.smembers(chave))
+
+        # envia para todos na sala que o usuario saiu
         emit("usuario_saiu", {
             "sala": nome_sala,
             "usuario": usuario
         }, to=nome_sala)
 
+        # envia a lista atualizada de onlines naquela sala
         emit("usuarios_online", {
             "sala": nome_sala,
-            "usuarios": list(usuarios_por_sala.get(nome_sala, []))
+            "usuarios": usuarios
         }, to=nome_sala)
-
-    ''' FINALIZAR AQUIIIII!!
 
     @socketio.on("enviar_mensagem")
     def enviar_mensagem(data):
         """
         Evento chamado quando o usuário envia uma mensagem
-
-        Espera receber:
-        {
-            "sala": "nome da sala",
-            "usuario": "nome do usuário",
-            "texto": "mensagem"
-        }
         """
 
+        # pega os dados
+        nome_sala = data.get("sala")
+        usuario = data.get("usuario")
+        texto = data.get("texto")
+        expira_em = data.get("expiraEm")
 
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    - ja adicionei os eventos no app/__init__.py,
-    - coloquei o socket no script do html, 
-    - modifiquei a função entrarNaSala() em static/js/chat.js, agora eles entram na sala via websocket, e não fica chamando a api a todo segundo
-    - 
+        if not nome_sala or not usuario or not texto:
+            emit("erro_socket", {"erro": "Dados incompletos"})
+            return
 
-    agora ta faltando:
-    - terminar essa função de enviar_mensagem ali em cima,
-    - terminar o arquivo socket.js no static/js/socket.js,
-    - alterar a função enviar() em static/js/chat.js, agora deve emitir socket.emit("enviar_mensagem", ...), e não usar apiPost("/mensagens")
-    - alterar a função voltarLobby() em static/js/ui.js, agora deve emitir socket.emit("sair_sala", ...) antes de limpar salaAtual
-    - modificar static/js/chat.js,
-    - emitir evento de saída da sala em voltarLobby() em static/js/ui.js,
-    '''
+        # verifica se a sala existe no banco!!
+        sala = Room.query.filter_by(name=nome_sala).first()
+
+        if not sala:
+            emit("erro_socket", {"erro": "Sala não encontrada"})
+            return
+
+        # salva a mensagem no banco de dados
+        nova_msg = Message(room_id=sala.id, username=usuario, content=texto, expires_at=expira_em)
+        db.session.add(nova_msg)
+        db.session.commit()
+
+        # mostra amensagem instantaneamente pra todo mundo da sala
+        emit("nova_mensagem", {
+            "sala": nome_sala,
+            "usuario": usuario,
+            "texto": texto,
+            "expiraEm": expira_em
+        }, to=nome_sala)
+
+

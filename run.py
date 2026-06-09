@@ -3,11 +3,9 @@ arquivo principal para executar a aplicação Flask / ponto de entrada do projet
 
 executa ele quando quiser iniciar o servidor
 '''
+import os
 
-# função que cria e configura o Flask
 from app import create_app
-
-# iniciar o servidor com suporte a WebSocket
 from app.extensions import socketio
 
 
@@ -17,6 +15,11 @@ app = create_app()
 
 if __name__ == "__main__":
 
+    # se não existir variavel PORT, vai entrar na porta 5000
+    # pra mudar de porta, chame PORT quando for rodar o código, exemplo:
+    # $env:PORT=5001; python run.py
+    porta = int(os.getenv("PORT", 5000))
+
     # inicia o servidor Flask usando SocketIO
     # se fosse uma API Flask comum, poderia ser app.run()
     socketio.run(app,
@@ -24,9 +27,12 @@ if __name__ == "__main__":
         # permite que a aplicação aceite conexões externas tambem, não apenas do próprio computador
         host="0.0.0.0",
 
-        # porta onde o servidor vai rodar, http://localhost:5000
-        port=5000,
+        # porta onde o servidor vai rodar
+        port=porta,
 
         # ativa o modo debug durante o desenvolvimento, mostra erros detalhados e reinicia o servidor quando o código muda.
-        debug=True
+        debug=True,
+
+        # se o código for alterado enquanto está rodandd, não recarrega
+        use_reloader=False
     )
