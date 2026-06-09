@@ -1,2 +1,2 @@
 [deploy]
-startCommand = "python run.py"
+startCommand = "flask db upgrade && python run.py"
