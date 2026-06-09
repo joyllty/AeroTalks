@@ -15,6 +15,7 @@ socket.on("erro_socket", function (data) {
 
 //nova mensagem
 socket.on("nova_mensagem", function (m) {
+  if (m.sala !== salaAtual) return;
   //  se a mensagem for de outra pessoa, mostra na tela
   if (m.usuario !== meuUser) {
     renderMsg(m.usuario, m.texto, m.expiraEm, false);
@@ -50,9 +51,3 @@ socket.on("sala_destruida", function (data) {
   }
 });
 
-/*
-"nova_mensagem", OK
-"usuarios_online", OK
-"usuario_entrou", OK
-"usuario_saiu" OK
- */
