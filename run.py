@@ -34,5 +34,7 @@ if __name__ == "__main__":
         debug=True,
 
         # se o código for alterado enquanto está rodandd, não recarrega
-        use_reloader=False
+        use_reloader=False,
+
+        allow_unsafe_werkzeug=True
     )
