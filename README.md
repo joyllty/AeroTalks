@@ -10,3 +10,20 @@ O projeto está implantado na Railway e pode ser acessado pelo link:
 
 https://aerotalks-production.up.railway.app/
 
+# Estrutura do Repositório
+AeroTalks/
+├── app/
+│   ├── models/        # Models do banco de dados
+│   ├── routes/        # Rotas HTTP 
+│   ├── sockets/       # Eventos WebSocket com Socket.IO
+│   ├── static/        # Arquivos CSS e JavaScript
+│   ├── templates/     # Página HTML principal
+│   ├── config.py      # Configurações da aplicação
+│   ├── extensions.py  # Inicialização das extensões Flask
+│   └── __init__.py    # Factory da aplicação Flask
+│
+├── migrations/        # Migrations do banco com Flask-Migrate
+├── run.py             # Arquivo para iniciar a aplicação
+├── requirements.txt   # Dependências do projeto
+├── railway.toml       # Configuração de deploy na Railway
+└── README.md
