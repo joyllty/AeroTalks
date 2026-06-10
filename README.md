@@ -11,6 +11,7 @@ O projeto está implantado na Railway e pode ser acessado pelo link:
 https://aerotalks-production.up.railway.app/
 
 # Estrutura do Repositório
+```txt
 AeroTalks/
 ├── app/
 │   ├── models/        # Models do banco de dados
@@ -27,3 +28,4 @@ AeroTalks/
 ├── requirements.txt   # Dependências do projeto
 ├── railway.toml       # Configuração de deploy na Railway
 └── README.md
+```
