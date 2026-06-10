@@ -4,7 +4,7 @@ function obterCorDoUsuario(nome) {
   const paleta = [
   '#bf40fa', // Roxo Neon original
   '#4c5dd7', // Azul Cyber original
-  '#1a1035', // Roxo Escuro do Grid original
+  '#4400ff', // Roxo Escuro do Grid original
   '#9b86c8', // Lavanda Retrô original
   '#ff7eb3', // Rosa Chiclete original
   '#e066ff', // Lilás Brilhante
