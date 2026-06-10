@@ -2,16 +2,12 @@
 function obterCorDoUsuario(nome) {
   // Cores selecionadas para combinar com a estética AeroTalks OS (tons escuros/pastéis para dar contraste)
   const paleta = [
-  '#bf40fa', // Roxo Neon original
-  '#4c5dd7', // Azul Cyber original
+  '#bf40fa', // Roxo Neon original // Azul Cyber original
   '#4400ff', // Roxo Escuro do Grid original
-  '#9b86c8', // Lavanda Retrô original
   '#ff7eb3', // Rosa Chiclete original
-  '#e066ff', // Lilás Brilhante
-  '#3343a2', // Azul Noturno
+  '#e066ff', // Lilás Brilhante // Azul Noturno
   '#7053a0', // Roxo Opaco
   '#ff4fa8', // Hot Pink
-  '#8a2be2'  // Violeta Intenso
   ];
 
   // Algoritmo simples de hash para transformar o nome em um número único
