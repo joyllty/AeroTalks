@@ -1,3 +1,31 @@
+// --- SISTEMA DE PALETA DE CORES PARA USUÁRIOS ---
+function obterCorDoUsuario(nome) {
+  // Cores selecionadas para combinar com a estética AeroTalks OS (tons escuros/pastéis para dar contraste)
+  const paleta = [
+  '#bf40fa', // Roxo Neon original
+  '#4c5dd7', // Azul Cyber original
+  '#1a1035', // Roxo Escuro do Grid original
+  '#9b86c8', // Lavanda Retrô original
+  '#ff7eb3', // Rosa Chiclete original
+  '#e066ff', // Lilás Brilhante
+  '#3343a2', // Azul Noturno
+  '#7053a0', // Roxo Opaco
+  '#ff4fa8', // Hot Pink
+  '#8a2be2'  // Violeta Intenso
+  ];
+
+  // Algoritmo simples de hash para transformar o nome em um número único
+  let hash = 0;
+  for (let i = 0; i < nome.length; i++) {
+    hash = nome.charCodeAt(i) + ((hash << 5) - hash);
+  }
+
+  // Garante que o número seja positivo e escolhe um índice da paleta
+  const index = Math.abs(hash) % paleta.length;
+  return paleta[index];
+}
+// ------------------------------------------------
+
 function entrarNaSala(nome) {
   salaAtual = nome;
 
@@ -15,7 +43,6 @@ function entrarNaSala(nome) {
 
   document.getElementById("container-msgs").innerHTML =
     `<div class="msg-sys">Entrou em <em>${nome}</em> — ⏱ msgs somem em 60min</div>`;
-
 
   // busca histórico uma vez ao entrar
   buscarMsgs();
@@ -74,7 +101,7 @@ async function enviar() {
 
   inp.value = "";
 
-socket.emit("enviar_mensagem", {
+  socket.emit("enviar_mensagem", {
     sala: salaAtual,
     usuario: meuUser,
     texto: txt,
@@ -107,9 +134,12 @@ function renderMsg(user, txt, exp, mine) {
   div.className = `msg ${mine ? "mine" : "theirs"}`;
   div.dataset.exp = exp;
 
+  // Só aplica a paleta dinâmica se NÃO for você. Se for você, deixa o CSS padrão agir.
+  const estiloNome = mine ? "" : `style="color: ${obterCorDoUsuario(user)}; font-weight: bold;"`;
+
   div.innerHTML = `
     <div class="msg-head">
-      <span>${mine ? user + " (você)" : user}</span>
+      <span ${estiloNome}>${mine ? user + " (você)" : user}</span>
       <span class="msg-timer">⏱ ...</span>
     </div>
     <div class="msg-bubble">${txt}</div>
