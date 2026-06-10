@@ -10,20 +10,3 @@ O projeto está implantado na Railway e pode ser acessado pelo link:
 
 https://aerotalks-production.up.railway.app/
 
-## Como rodar
-
-1. Criar ambiente virtual:
-
-  python -m venv venv
-
-2. Ativar ambiente virtual:
-
-  venv\Scripts\activate
-
-3. Instalar dependências:
-
-  pip install -r requirements.txt
-
-4. Rodar o projeto:
-
-  python run.py
