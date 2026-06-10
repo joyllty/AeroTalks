@@ -63,6 +63,13 @@ def listar_mensagens():
         return jsonify([]), 200
 
     agora = int(time.time() * 1000)
+
+    # remove do banco mensagens expiradas
+    Message.query.filter(Message.room_id == sala.id,Message.expires_at <= agora).delete()
+
+    db.session.commit()
+
+    # busca só mensagens ainda válidas
     mensagens = Message.query.filter(Message.room_id == sala.id, Message.expires_at > agora).all()
 
     return jsonify([{"usuario": m.username, "texto": m.content, "expiraEm": m.expires_at} for m in mensagens]), 200
